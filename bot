@@ -1,0 +1,25 @@
+import random
+import discord
+from discord.ext import commands
+
+intents = discord.Intents.default()
+intents.message_content = True
+
+bot = commands.Bot(command_prefix='$', intents=intents)
+
+@bot.command()
+async def on_ready(ctx):
+    await ctx.send(f'добро пожаловать {bot.user}!')
+@bot.command()
+async def play(ctx):
+    await ctx.send(f'сыграем!')
+
+@bot.command()
+async def hello(ctx):
+    await ctx.send(f'Привет! Я бот {bot.user}!')
+
+@bot.command()
+async def heh(ctx, count_heh=5):
+    await ctx.send("he" * count_heh)
+
+bot.run("MTE0NTMwOTgwMTY3MzQwMDM3MQ.GCLBqv.3l-hK--L_i6GmPObhALlYoGeFEOxjhukiSwhFs")
