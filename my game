@@ -1,6 +1,8 @@
 import pygame
+import pygame.mixer
 
 pygame.init()
+pygame.mixer.init()
 
 win = pygame.display.set_mode((700, 500))
 pygame.display.set_caption('Game')
@@ -13,6 +15,8 @@ speed = 5
 isJump = False
 JumpCount = 10
 bullets = []
+pygame.mixer.music.load("music.mp3")
+pygame.mixer.music.play(-1)
 
 enemy_width = 40
 enemy_height = 60
@@ -294,4 +298,3 @@ while menu:
     pygame.display.update()
 
 pygame.quit()
-
