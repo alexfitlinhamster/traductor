@@ -17,6 +17,9 @@ JumpCount = 10
 bullets = []
 pygame.mixer.music.load("music.mp3")
 pygame.mixer.music.play(-1)
+menu_background = pygame.image.load("FON_GAME.png")
+menu_background = pygame.transform.scale(menu_background, (700, 500))
+enemy_colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (0, 255, 255), (255, 0, 255), (128, 0, 0), (0, 128, 0), (0, 0, 128), (128, 128, 0), (0, 128, 128), (128, 0, 128), (64, 0, 0), (0, 64, 0), (0, 0, 64), (64, 64, 0), (0, 64, 64), (64, 0, 64), (32, 0, 0), (0, 32, 0), (0, 0, 32), (32, 32, 0), (0, 32, 32), (32, 0, 32)]
 
 enemy_width = 40
 enemy_height = 60
@@ -33,87 +36,135 @@ play_button = pygame.Rect(250, 200, 200, 100)
 play_button_color = (0, 255, 0)
 kill_count = 0
 enemy_color = (255, 0, 0)
-shop_button = pygame.Rect(250, 320, 200, 100)
-shop_button_color = (255, 0, 0)
-shop_open = False
-coins = 0
-in_shop = False
-enemy_colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (0, 255, 255), (255, 0, 255), (128, 0, 0), (0, 128, 0), (0, 0, 128), (128, 128, 0), (0, 128, 128), (128, 0, 128), (64, 0, 0), (0, 64, 0), (0, 0, 64), (64, 64, 0), (0, 64, 64), (64, 0, 64), (32, 0, 0), (0, 32, 0), (0, 0, 32), (32, 32, 0), (0, 32, 32), (32, 0, 32)]
-current_color_index = 0
-
 paused = False
 pause_menu = False
-menu_active = False  # Переменная для отслеживания активности главного меню
+shop_open = False
+shop_coins = 0
+in_shop = False  # Объявляем in_shop
+
+# Остальные глобальные переменные
+menu_active = False
 
 def collision(rect1, rect2):
     return rect1.colliderect(rect2)
+# ... (previous code remains the same)
+
+shop_button = pygame.Rect(250, 320, 200, 100)
+shop_button_color = (255, 0, 0)  # Add shop button color here
+
+# ... (more code remains the same)
+def draw_pause_menu():
+    global menu_active, in_shop  # Добавьте in_shop в область видимости
+    win.fill((0, 0, 0))
+    title_text = font.render("Пауза", True, (255, 255, 255))
+    win.blit(title_text, (320, 100))
+
+    pygame.draw.rect(win, (0, 255, 0), pygame.Rect(250, 200, 200, 100))
+    resume_text = font.render("Продолжить", True, (0, 0, 0))
+    win.blit(resume_text, (270, 240))   
+
+    if not in_shop:
+        pygame.draw.rect(win, (0, 0, 255), pygame.Rect(250, 320, 200, 100))
+        shop_text = font.render("Магазин", True, (255, 255, 255))
+        win.blit(shop_text, (310, 360))
+
+    pygame.draw.rect(win, (255, 0, 0), pygame.Rect(250, 440, 200, 100))
+    play_again_text = font.render("Начать заново", True, (255, 255, 255))
+    win.blit(play_again_text, (270, 480))
+
+    pygame.display.update()
+    menu_active = True
 
 def draw_menu():
     global menu_active
     win.fill((0, 0, 0))
     title_text = font.render("Главное меню", True, (255, 255, 255))
     win.blit(title_text, (250, 100))
-    
-    if not in_shop:
+
+    if not pause_menu:
         pygame.draw.rect(win, play_button_color, play_button)
         play_text = font.render("Играть", True, (0, 0, 0))
         win.blit(play_text, (330, 240))
 
-    pygame.draw.rect(win, shop_button_color, shop_button)
-    shop_text = font.render("Магазин", True, (0, 0, 0))
-    win.blit(shop_text, (310, 360))
-    
+    if not pause_menu:
+        pygame.draw.rect(win, shop_button_color, shop_button)
+        shop_text = fontrender("Магазин", True, (0, 0, 0))
+        win.blit(shop_text, (310, 360))
+
     pygame.display.update()
     menu_active = True
 
-def draw_shop():
+# ... (remaining code remains the same)
+
+def draw_menu():
     global menu_active
+    win.blit(menu_background, (0, 0))
+    title_text = font.render("Главное меню", True, (255, 255, 255))
+    win.blit(title_text, (250, 100))
+
+    if not pause_menu:
+        pygame.draw.rect(win, play_button_color, play_button)
+        play_text = font.render("Играть", True, (0, 0, 0))
+        win.blit(play_text, (330, 240))
+
+    if not pause_menu:
+        pygame.draw.rect(win, shop_button_color, shop_button)
+        shop_text = font.render("Магазин", True, (0, 0, 0))
+        win.blit(shop_text, (310, 360))
+
+    pygame.display.update()
+    menu_active = True
+
+
+def draw_shop():
+    global menu_active, shop_coins
     win.fill((0, 0, 0))
     title_text = font.render("Магазин", True, (255, 255, 255))
     win.blit(title_text, (320, 100))
-    
-    coins_text = font.render(f"Монеты: {coins}", True, (255, 255, 255))
+
+    coins_text = font.render(f"Монеты: {shop_coins}", True, (255, 255, 255))
     win.blit(coins_text, (10, 10))
-    
+
     pygame.draw.rect(win, (0, 0, 255), pygame.Rect(100, 200, 200, 50))
     buy_blue_text = font.render("Купить синего персонажа (10 монет)", True, (0, 0, 0))
     win.blit(buy_blue_text, (110, 210))
-    
+
     pygame.draw.rect(win, (0, 255, 0), pygame.Rect(100, 300, 200, 50))
     buy_green_text = font.render("Купить зеленого персонажа (20 монет)", True, (0, 0, 0))
     win.blit(buy_green_text, (110, 310))
-    
+
     pygame.draw.rect(win, (255, 0, 0), pygame.Rect(300, 400, 100, 50))
     back_text = font.render("Вернуться в меню", True, (0, 0, 0))
     win.blit(back_text, (310, 410))
-    
+
     pygame.display.update()
     menu_active = True
 
-def draw_pause_menu():
+def draw_menu():
     global menu_active
+    # Очистите экран
     win.fill((0, 0, 0))
-    title_text = font.render("Пауза", True, (255, 255, 255))
-    win.blit(title_text, (320, 100))
-    
-    pygame.draw.rect(win, (0, 255, 0), pygame.Rect(250, 200, 200, 100))
-    resume_text = font.render("Продолжить", True, (0, 0, 0))
-    win.blit(resume_text, (270, 240))
-    
-    if not in_shop:
-        pygame.draw.rect(win, (0, 0, 255), pygame.Rect(250, 320, 200, 100))
-        shop_text = font.render("Магазин", True, (255, 255, 255))
+    # Установите изображение фона
+    win.blit(menu_background, (0, 0))
+    title_text = font.render("Главное меню", True, (255, 255, 255))
+    win.blit(title_text, (250, 100))
+
+    if not pause_menu:
+        pygame.draw.rect(win, play_button_color, play_button)
+        play_text = font.render("Играть", True, (0, 0, 0))
+        win.blit(play_text, (330, 240))
+
+    if not pause_menu:
+        pygame.draw.rect(win, shop_button_color, shop_button)
+        shop_text = font.render("Магазин", True, (0, 0, 0))
         win.blit(shop_text, (310, 360))
-    
-    pygame.draw.rect(win, (255, 0, 0), pygame.Rect(250, 440, 200, 100))
-    play_again_text = font.render("Начать заново", True, (255, 255, 255))
-    win.blit(play_again_text, (270, 480))
-    
+
     pygame.display.update()
     menu_active = True
 
 def check_button_clicks():
-    global run, menu, shop_open, player_lives, x, y, enemy_x, bullets, kill_count, coins, in_shop, paused, pause_menu, menu_active
+    global run, menu, shop_open, player_lives, x, y, enemy_x, bullets, kill_count, shop_coins, paused, pause_menu, menu_active
+    global in_shop
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -121,11 +172,10 @@ def check_button_clicks():
                 run = False
             elif shop_open:
                 shop_open = False
-                in_shop = False
             else:
                 menu = False
                 run = False
-        
+
         if event.type == pygame.MOUSEBUTTONDOWN:
             if play_button.collidepoint(event.pos) and menu_active:
                 menu_active = False
@@ -136,23 +186,21 @@ def check_button_clicks():
                 y = 430
                 enemy_x = 700
                 kill_count = 0
-                coins = 0
-                in_shop = False
+                shop_coins = 0
+                shop_open = False
                 game_loop()
             elif shop_button.collidepoint(event.pos) and menu_active:
                 menu_active = False
                 shop_open = True
-                in_shop = True
             elif shop_open:
-                if pygame.Rect(100, 200, 200, 50).collidepoint(event.pos) and coins >= 10:
-                    coins -= 10
+                if pygame.Rect(100, 200, 200, 50).collidepoint(event.pos) and shop_coins >= 10:
+                    shop_coins -= 10
                     enemy_color = (0, 0, 255)
-                elif pygame.Rect(100, 300, 200, 50).collidepoint(event.pos) and coins >= 20:
-                    coins -= 20
+                elif pygame.Rect(100, 300, 200, 50).collidepoint(event.pos) and shop_coins >= 20:
+                    shop_coins -= 20
                     enemy_color = (0, 255, 0)
                 elif pygame.Rect(300, 400, 100, 50).collidepoint(event.pos):
                     shop_open = False
-                    in_shop = False
             elif pause_menu:
                 if pygame.Rect(250, 200, 200, 100).collidepoint(event.pos):
                     paused = False
@@ -160,7 +208,6 @@ def check_button_clicks():
                 elif pygame.Rect(250, 320, 200, 100).collidepoint(event.pos) and menu_active:
                     menu_active = False
                     shop_open = True
-                    in_shop = True
                 elif pygame.Rect(250, 440, 200, 100).collidepoint(event.pos) and menu_active:
                     menu_active = False
                     run = True
@@ -169,13 +216,13 @@ def check_button_clicks():
                     y = 430
                     enemy_x = 700
                     kill_count = 0
-                    coins = 0
-                    in_shop = False
+                    shop_coins = 0
                     pause_menu = False
                     game_loop()
 
 def game_loop():
-    global run, player_lives, x, y, current_cooldown, bullets, enemy_y, enemy_x, JumpCount, enemy_color, kill_count, isJump, current_color_index, paused, pause_menu, menu_active
+    global run, player_lives, x, y, current_cooldown, bullets, enemy_y, enemy_x, JumpCount, enemy_color, kill_count, isJump, current_color_index, paused, pause_menu, menu_active, shop_coins
+    current_color_index = 0  # Добавляем и инициализируем переменную current_color_index
 
     while run and player_lives > 0:
         for event in pygame.event.get():
@@ -233,6 +280,7 @@ def game_loop():
                     bullets.remove(bullet)
                     enemy_x = 700
                     kill_count += 1
+                    shop_coins += 1  # Award a coin for each kill
 
             player_rect = pygame.Rect(x, y, width, height)
             enemy_rect = pygame.Rect(enemy_x, enemy_y, enemy_width, enemy_height)
@@ -259,7 +307,9 @@ def game_loop():
             pygame.draw.rect(win, (0, 0, 255), (x, y, width, height))
 
             lives_text = font.render(f"Жизни: {player_lives}", True, (255, 255, 255))
+            coins_text = font.render(f"Монеты: {shop_coins}", True, (255, 255, 255))  # Display coins
             win.blit(lives_text, (10, 10))
+            win.blit(coins_text, (10, 50))
 
         if paused:
             pause_text = font.render("Пауза", True, (255, 255, 255))
