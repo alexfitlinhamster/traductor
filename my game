@@ -20,7 +20,9 @@ pygame.mixer.music.play(-1)
 menu_background = pygame.image.load("FON_GAME.png")
 menu_background = pygame.transform.scale(menu_background, (700, 500))
 enemy_colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (0, 255, 255), (255, 0, 255), (128, 0, 0), (0, 128, 0), (0, 0, 128), (128, 128, 0), (0, 128, 128), (128, 0, 128), (64, 0, 0), (0, 64, 0), (0, 0, 64), (64, 64, 0), (0, 64, 64), (64, 0, 64), (32, 0, 0), (0, 32, 0), (0, 0, 32), (32, 32, 0), (0, 32, 32), (32, 0, 32)]
-
+background_image = pygame.image.load("fon1.png")
+background_image = pygame.transform.scale(background_image, (700, 500))  # Замените 700, 500 на ширину и высоту вашего игрового окна
+enemy_image = pygame.image.load("enemy2.png")
 enemy_width = 40
 enemy_height = 60
 enemy_speed = 1
@@ -267,7 +269,7 @@ def game_loop():
                 current_cooldown = cooldown
 
             enemy_x -= enemy_speed
-
+            win.blit(enemy_image, (enemy_x, enemy_y))
             if enemy_x < 0:
                 enemy_x = 700
                 enemy_y = 430
@@ -294,7 +296,7 @@ def game_loop():
             bullets = [[bx + 5, by] for bx, by in bullets if bx > 0]
 
             win.fill((0, 0, 0))
-
+            win.blit(background_image, (0, 0))      
             if kill_count % 3 == 0 and kill_count > 0:
                 current_color_index = (current_color_index + 1) % len(enemy_colors)
                 enemy_color = enemy_colors[current_color_index]
