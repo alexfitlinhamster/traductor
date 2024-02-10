@@ -1,0 +1,42 @@
+import discord
+from discord.ext import commands
+from mode import get_class
+intents = discord.Intents.default()
+intents.message_content = True
+
+bot = commands.Bot(command_prefix='$', intents=intents)
+
+@bot.event
+async def on_ready():
+    print(f'We have logged in as {bot.user}')
+
+@bot.command()
+async def hello(ctx):
+    await ctx.send(f'Hi! I am a bot {bot.user}!')
+
+@bot.command()
+async def heh(ctx, count_heh = 5):
+    await ctx.send("he" * count_heh)
+
+@bot.command()
+async def foto(ctx):
+    attachments = ctx.message.attachments
+
+    for attachment in attachments:
+        url = attachment.url
+
+        await attachment.save(f'.images{file_name}')
+        class_name, confidence= get_class(model_path='keras_model.h5', labels_path='labels.txt', image_path=f'/images')
+        msg = await ctx.send(foto )
+        await msg.delete()
+        await ctx.send(f'%{confidence}% en foto {class_name.lower()}')
+        remove(f',images/{file_name}')
+    else:
+        await ctx.send('el file esta mal cargado')
+        return
+    
+        await ctx.send(f"Received attachment:  URL: {url}")
+
+
+bot.run("MTE0NTMwOTgwMTY3MzQwMDM3MQ.GErutD.wfEanjo84U4Dz4G1QOGzcIDPPpdh-_W5JKSpHs")
+
