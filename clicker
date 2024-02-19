@@ -1,0 +1,194 @@
+import pygame
+import sys
+import random
+
+# Инициализация Pygame
+pygame.init()
+
+# Определение цветов
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+
+# Установка размеров окна
+WIDTH, HEIGHT = 800, 600
+
+# Создание окна
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("2D Кликер")
+
+# Загрузка изображений персонажей, фона и товаров в магазине
+character_images = [pygame.transform.scale(pygame.image.load("enemy_1.png"), (100, 100)),
+                    pygame.transform.scale(pygame.image.load("enemy_2.png"), (100, 100))]
+background = pygame.image.load("background.jpg")  # Замените "background.jpg" на ваше изображение фона
+background = pygame.transform.scale(background, (WIDTH, HEIGHT))  # Изменяем размер фона
+
+# Загрузка изображения монеты
+coin_image = pygame.transform.scale(pygame.image.load("money1.png"), (30, 30))
+coin_image.set_colorkey((255, 255, 255))  # Устанавливаем белый цвет как прозрачный
+# Загрузка изображения меню с прозрачностью
+menu_image = pygame.transform.scale(pygame.image.load("meny1.png").convert_alpha(), (500, 500))
+menu_image.set_colorkey((255, 255, 255))  # Устанавливаем белый цвет как прозрачный
+item_images = [pygame.transform.scale(pygame.image.load("enemy_1.png"), (50, 50)),
+               pygame.transform.scale(pygame.image.load("enemy_2.png"), (50, 50))]
+item_prices = [10, 20]  # Стоимость товаров в магазине
+
+# Создание поверхности для кнопки "Рестарт" с альфа-каналом
+restart_button_image = pygame.transform.scale(pygame.image.load('restart.png'), (600, 500))
+restart_button_image.set_colorkey((255, 255, 255))
+restart_button_rect = restart_button_image.get_rect(center=(WIDTH // 2, HEIGHT // 1.75))
+play_button_image = pygame.transform.scale(pygame.image.load('play.png'), (600, 500))
+play_button_image.set_colorkey((255, 255, 255))
+play_button_rect = restart_button_image.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+# Установка начальных значений
+score = 0
+font = pygame.font.Font(None, 36)
+clicks_to_change_character = 10  # Количество кликов для смены персонажа
+current_character_index = 0
+
+enemy_prices = [5, 10]  # Стоимость врагов в очках
+
+# Флаг для отображения меню паузы и магазина
+paused = False
+shop_open = False
+
+# Функция для смены персонажа
+def change_character():
+    global current_character_index
+    current_character_index = (current_character_index + 1) % len(character_images)
+
+# Функция для отображения меню паузы
+def show_pause_menu():
+    global paused, shop_open, score
+    while paused:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                x, y = pygame.mouse.get_pos()
+                if 300 <= x <= 500 and 250 <= y <= 300:
+                    paused = False
+                elif 300 <= x <= 400 and 350 <= y <= 400:
+                    reset_game()  # Сброс игры
+                elif restart_button_rect.collidepoint(x, y):  # Проверка, была ли нажата кнопка "Рестарт"
+                    reset_game()  # Сброс игры
+                    paused = False
+                elif 600 <= x <= 700 and 0 <= y <= 50:
+                    shop_open = not shop_open
+
+        screen.fill(BLACK)
+        screen.blit(menu_image, (150, 110))
+        pygame.draw.rect(screen, (0, 0, 255), (600, 0, 100, 50))    # Синий квадрат для третьей надписи
+
+        # Отрисовка кнопки "Рестарт"
+        screen.blit(restart_button_image, restart_button_rect.topleft)
+
+        screen.blit(play_button_image, play_button_rect.topleft)
+
+        pygame.display.flip()
+        pygame.time.Clock().tick(60)
+
+# Функция для отображения магазина
+def show_shop():
+    global score, enemy_prices, shop_open
+    shop_open = True
+    while shop_open:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                x, y = pygame.mouse.get_pos()
+                if 300 <= x <= 400 and 400 <= y <= 450 and score >= item_prices[0]:
+                    score -= item_prices[0]
+                    change_character()
+                    enemy_prices[0] += 5
+                elif 500 <= x <= 600 and 400 <= y <= 450 and score >= item_prices[1]:
+                    score -= item_prices[1]
+                    print("You bought item 2")
+                elif 600 <= x <= 700 and 0 <= y <= 50:
+                    shop_open = False
+
+        screen.fill(BLACK)
+        text = font.render(f"Магазин (Очки: {score})", True, WHITE)
+        screen.blit(text, (WIDTH // 2 - 100, HEIGHT // 2 - 50))
+        pygame.draw.rect(screen, (0, 0, 255), (100, 200, 200, 50))  # Синий квадрат для первой надписи
+        text = font.render("Персонаж", True, BLACK)
+        screen.blit(text, (110, 210))
+        pygame.draw.rect(screen, (0, 0, 255), (500, 400, 150, 50))  # Синий квадрат для второй надписи
+        text = font.render("Товар 2", True, BLACK)
+        screen.blit(text, (510, 410))
+        pygame.display.flip()
+        pygame.time.Clock().tick(60)
+
+# Функция для сброса игры
+def reset_game():
+    global score, current_character_index
+    score = 0
+    current_character_index = 0
+
+# Основной игровой цикл
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            x, y = pygame.mouse.get_pos()
+            if not paused and not shop_open:
+                if 100 <= x <= 200 and 100 <= y <= 200:
+                    score += 1
+                    coin_x = random.randint(0, WIDTH - 30)
+                    coin_y = random.randint(0, HEIGHT - 30)
+                    screen.blit(coin_image, (coin_x, coin_y))
+                    if score % clicks_to_change_character == 0:
+                        change_character()
+                elif 700 <= x <= 800 and 0 <= y <= 50:
+                    shop_open = True
+            elif paused:
+                if 300 <= x <= 500 and 250 <= y <= 300:
+                    paused = False
+                elif 300 <= x <= 400 and 350 <= y <= 400:
+                    reset_game()  # Сброс игры
+                elif restart_button_rect.collidepoint(x, y):  # Проверка, была ли нажата кнопка "Рестарт"
+                    reset_game()  # Сброс игры
+                    paused = False
+                elif 600 <= x <= 700 and 0 <= y <= 50:
+                    shop_open = not shop_open
+            elif shop_open:
+                if 0 <= x <= 800 and 0 <= y <= 600:
+                    shop_open = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                paused = not paused
+            elif event.key == pygame.K_s:
+                shop_open = not shop_open
+
+    # Отображение фона
+    screen.blit(background, (0, 0))
+
+    # Отображение изображения монеты в левом нижнем углу
+    coin_rect = coin_image.get_rect(topleft=(100, 5))
+    screen.blit(coin_image, coin_rect)
+
+    # Отображение экрана паузы, магазина или игрового экрана
+    if paused:
+        show_pause_menu()
+    elif shop_open:
+        show_shop()
+    else:
+        # Обновление текста счета
+        score_text = font.render(f" {score}", True, WHITE)
+        screen.blit(score_text, (70, 10))
+
+        character_rect = character_images[current_character_index].get_rect(center=(150, 150))
+        screen.blit(character_images[current_character_index], character_rect)
+        text = font.render(f"Персонаж: {current_character_index + 1}", True, WHITE)
+        screen.blit(text, (WIDTH // 2 - 100, HEIGHT - 50))
+
+
+    # Обновление экрана
+    pygame.display.flip()
+
+    # Установка частоты обновления
+    pygame.time.Clock().tick(60)
