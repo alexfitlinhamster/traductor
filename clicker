@@ -34,21 +34,23 @@ font = pygame.font.Font(None, 36)
 clicks_to_change_character = 10
 current_character_index = 0
 
-enemy_prices = [5, 10]
-
 paused = False
 shop_open = False
 
 # Load enemy click sound
 pygame.mixer.init()
-pygame.mixer.music.load('click.mp3')  # Replace with your actual sound file
+enemy_click_sound = pygame.mixer.Sound('click.mp3')  # Звук нажатия на врага
+pygame.mixer.music.load('background.mp3')  # Замените на ваш файл фоновой музыки
+pygame.mixer.music.play(-1)  # -1 означает зацикливание музыки
 
 def change_character():
     global current_character_index
     current_character_index = (current_character_index + 1) % len(character_images)
-
 def show_pause_menu():
     global paused, shop_open, score
+    pause_menu_background = pygame.image.load("pause_menu.jpg")
+    pause_menu_background = pygame.transform.scale(pause_menu_background, (WIDTH, HEIGHT))
+
     while paused:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -66,8 +68,7 @@ def show_pause_menu():
                 elif 600 <= x <= 700 and 0 <= y <= 50:
                     shop_open = not shop_open
 
-        screen.fill(BLACK)
-        screen.blit(menu_image, (150, 110))
+        screen.blit(pause_menu_background, (0, 0))
         pygame.draw.rect(screen, (0, 0, 255), (600, 0, 100, 50))
 
         screen.blit(restart_button_image, restart_button_rect.topleft)
@@ -76,37 +77,6 @@ def show_pause_menu():
         pygame.display.flip()
         pygame.time.Clock().tick(60)
 
-def show_shop():
-    global score, enemy_prices, shop_open
-    shop_open = True
-    while shop_open:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                x, y = pygame.mouse.get_pos()
-                if 300 <= x <= 400 and 400 <= y <= 450 and score >= item_prices[0]:
-                    score -= item_prices[0]
-                    change_character()
-                    enemy_prices[0] += 5
-                elif 500 <= x <= 600 and 400 <= y <= 450 and score >= item_prices[1]:
-                    score -= item_prices[1]
-                    print("You bought item 2")
-                elif 600 <= x <= 700 and 0 <= y <= 50:
-                    shop_open = False
-
-        screen.fill(BLACK)
-        text = font.render(f"Магазин (Очки: {score})", True, WHITE)
-        screen.blit(text, (WIDTH // 2 - 100, HEIGHT // 2 - 50))
-        pygame.draw.rect(screen, (0, 0, 255), (100, 200, 200, 50))
-        text = font.render("Персонаж", True, BLACK)
-        screen.blit(text, (110, 210))
-        pygame.draw.rect(screen, (0, 0, 255), (500, 400, 150, 50))
-        text = font.render("Товар 2", True, BLACK)
-        screen.blit(text, (510, 410))
-        pygame.display.flip()
-        pygame.time.Clock().tick(60)
 
 def reset_game():
     global score, current_character_index
@@ -116,6 +86,10 @@ def reset_game():
 def show_start_menu():
     global score, paused, shop_open
     start_menu_open = True
+
+    # Load start menu background image
+    start_menu_background = pygame.image.load("fon_menu.jpg")
+    start_menu_background = pygame.transform.scale(start_menu_background, (WIDTH, HEIGHT))
 
     while start_menu_open:
         for event in pygame.event.get():
@@ -129,11 +103,8 @@ def show_start_menu():
                 elif 300 <= x <= 400 and 350 <= y <= 400:
                     pygame.quit()
                     sys.exit()
-
-        screen.fill(BLACK)
-        screen.blit(menu_image, (150, 110))
+        screen.blit(start_menu_background, (0, 0))
         screen.blit(play_button_image, play_button_rect.topleft)
-
         pygame.display.flip()
         pygame.time.Clock().tick(60)
 
@@ -152,13 +123,13 @@ def main():
                 if not paused and not shop_open:
                     if 100 <= x <= 200 and 100 <= y <= 200:
                         score += 1
-                        pygame.mixer.music.play()
+                        enemy_click_sound.play()  # Воспроизвести звук нажатия на врага
                         coin_x = random.randint(0, WIDTH - 30)
                         coin_y = random.randint(0, HEIGHT - 30)
                         screen.blit(coin_image, (coin_x, coin_y))
                         if score % clicks_to_change_character == 0:
                             change_character()
-                    elif 700 <= x <= 800 and 0 <= y <= 50:
+                    elif 700 <= x <= 800 and 0 <= y <= 50 and not shop_open:
                         shop_open = True
                 elif paused:
                     if 300 <= x <= 500 and 250 <= y <= 300:
@@ -185,8 +156,6 @@ def main():
 
         if paused:
             show_pause_menu()
-        elif shop_open:
-            show_shop()
         else:
             score_text = font.render(f" {score}", True, WHITE)
             screen.blit(score_text, (70, 10))
