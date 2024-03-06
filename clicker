@@ -11,6 +11,8 @@ BLACK = (0, 0, 0)
 
 # Размеры окна
 WIDTH, HEIGHT = 800, 600
+pygame.mixer.music.load("background.mp3")
+pygame.mixer.music.play(-1)  # -1 означает бесконечное воспроизведение
 
 # Создание окна
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -76,12 +78,35 @@ jump_duration = 10
 jump_timer = 0
 jumping = False
 
-def change_character():
-    global current_character_index
-    current_character_index = (current_character_index + 1) % len(character_images)
+# Новые переменные для управления звуком
+music_enabled = True
+sound_effects_enabled = True
 
+# Загрузка звуков
+click_sound = pygame.mixer.Sound("click.mp3")
+
+# Функции управления настройками
+def toggle_music():
+    global music_enabled
+    music_enabled = not music_enabled
+    if music_enabled:
+        pygame.mixer.music.play(-1)
+    else:
+        pygame.mixer.music.stop()
+
+def toggle_sound_effects():
+    global sound_effects_enabled
+
+    sound_effects_enabled = not sound_effects_enabled
+
+def play_sound_effect():
+    if sound_effects_enabled:
+        click_sound.play()
+
+# Отрисовка экрана паузы
 def show_pause_menu():
     global paused, shop_open, score
+
     while paused:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -106,13 +131,10 @@ def show_pause_menu():
         pygame.display.flip()
         pygame.time.Clock().tick(60)
 
-def reset_game():
-    global score, current_character_index
-    score = 0
-    current_character_index = 0
-
+# Отрисовка экрана начального меню
 def show_start_menu():
     global start_menu, paused, shop_open
+
     while start_menu:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -132,6 +154,7 @@ def show_start_menu():
         pygame.display.flip()
         pygame.time.Clock().tick(60)
 
+# Основной игровой цикл
 while True:
     show_start_menu()
 
@@ -148,6 +171,7 @@ while True:
                     coin_x = random.randint(0, WIDTH - 30)
                     coin_y = random.randint(0, HEIGHT - 30)
                     screen.blit(coin_image, (coin_x, coin_y))
+                    play_sound_effect()
                     if score % clicks_to_change_character == 0:
                         change_character()
                     if score % 10 == 0:
@@ -168,6 +192,14 @@ while True:
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 paused = not paused
+            elif event.key == pygame.K_m:
+                toggle_music()
+            elif event.key == pygame.K_s:
+                toggle_sound_effects()
+        # Определение функции смены персонажа
+        def change_character():
+            global current_character_index
+            current_character_index = (current_character_index + 1) % len(character_images)
 
     screen.blit(background, (0, 0))
     coin_rect = coin_image.get_rect(topleft=(100, 5))
@@ -197,4 +229,3 @@ while True:
 
     pygame.display.flip()
     pygame.time.Clock().tick(60)
-
