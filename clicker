@@ -2,55 +2,86 @@ import pygame
 import sys
 import random
 
+# Инициализация Pygame
 pygame.init()
 
+# Определение цветов
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
+# Размеры окна
 WIDTH, HEIGHT = 800, 600
 
+# Создание окна
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("2D Кликер")
+pygame.display.set_caption("Época de los Clics")
 
-character_images = [pygame.transform.scale(pygame.image.load("enemy_1.png"), (100, 100)),
-                    pygame.transform.scale(pygame.image.load("enemy_2.png"), (100, 100)),
-                    pygame.transform.scale(pygame.image.load("enemy_3.png"), (100, 100)),
-                    pygame.transform.scale(pygame.image.load("enemy_4.png"), (100, 100))]
+# Загрузка изображений персонажей, фона и предметов в магазине
+character_images = [
+    pygame.transform.scale(pygame.image.load("enemy_1.png"), (100, 100)),
+    pygame.transform.scale(pygame.image.load("enemy_2.png"), (100, 100)),
+    pygame.transform.scale(pygame.image.load("enemy_3.png"), (100, 100)),
+    pygame.transform.scale(pygame.image.load("enemy_4.png"), (100, 100)),
+    pygame.transform.scale(pygame.image.load("boss.png"), (150, 150))
+]
 background = pygame.image.load("background.jpg")
 background = pygame.transform.scale(background, (WIDTH, HEIGHT))
+
 coin_image = pygame.transform.scale(pygame.image.load("money1.png"), (30, 30))
 coin_image.set_colorkey((255, 255, 255))
-menu_image = pygame.transform.scale(pygame.image.load("meny1.png").convert_alpha(), (500, 500))
+
+# Добавленные изображения для анимации прыжка
+jump_character_images = [
+    pygame.transform.scale(pygame.image.load("enemy_1.png"), (100, 100)),
+    pygame.transform.scale(pygame.image.load("enemy_2.png"), (100, 100)),
+    pygame.transform.scale(pygame.image.load("enemy_3.png"), (100, 100)),
+    pygame.transform.scale(pygame.image.load("enemy_4.png"), (100, 100)),
+    pygame.transform.scale(pygame.image.load("boss.png"), (150, 150))
+]
+
+# Изображение меню и кнопок
+menu_image = pygame.transform.scale(pygame.image.load("fon_menu.jpg").convert_alpha(), (800, 600))
 menu_image.set_colorkey((255, 255, 255))
+
+pause_menu = pygame.transform.scale(pygame.image.load("pause_menu.jpg").convert_alpha(), (800, 600))
+
 restart_button_image = pygame.transform.scale(pygame.image.load('restart.png'), (600, 500))
 restart_button_image.set_colorkey((255, 255, 255))
 restart_button_rect = restart_button_image.get_rect(center=(WIDTH // 2, HEIGHT // 1.75))
+
 play_button_image = pygame.transform.scale(pygame.image.load('play.png'), (600, 500))
 play_button_image.set_colorkey((255, 255, 255))
 play_button_rect = play_button_image.get_rect(center=(WIDTH // 2, HEIGHT // 2))
 
+# Начальная конфигурация
 score = 0
 font = pygame.font.Font(None, 36)
 clicks_to_change_character = 10
 current_character_index = 0
 
+enemy_prices = [5, 10]
+
 paused = False
 shop_open = False
+start_menu = True
 
-# Load enemy click sound
-pygame.mixer.init()
-enemy_click_sound = pygame.mixer.Sound('click.mp3')  # Звук нажатия на врага
-pygame.mixer.music.load('background.mp3')  # Замените на ваш файл фоновой музыки
-pygame.mixer.music.play(-1)  # -1 означает зацикливание музыки
+boss_health = 100
+enemies_killed = 0
+boss_active = False
+boss_defeated = False
+
+# Новые переменные для анимации прыжка
+jump_height = 50
+jump_duration = 10
+jump_timer = 0
+jumping = False
 
 def change_character():
     global current_character_index
     current_character_index = (current_character_index + 1) % len(character_images)
+
 def show_pause_menu():
     global paused, shop_open, score
-    pause_menu_background = pygame.image.load("pause_menu.jpg")
-    pause_menu_background = pygame.transform.scale(pause_menu_background, (WIDTH, HEIGHT))
-
     while paused:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -68,15 +99,12 @@ def show_pause_menu():
                 elif 600 <= x <= 700 and 0 <= y <= 50:
                     shop_open = not shop_open
 
-        screen.blit(pause_menu_background, (0, 0))
-        pygame.draw.rect(screen, (0, 0, 255), (600, 0, 100, 50))
-
+        screen.blit(pause_menu, (0, 0))  # Отрисовка фона
         screen.blit(restart_button_image, restart_button_rect.topleft)
         screen.blit(play_button_image, play_button_rect.topleft)
 
         pygame.display.flip()
         pygame.time.Clock().tick(60)
-
 
 def reset_game():
     global score, current_character_index
@@ -84,88 +112,89 @@ def reset_game():
     current_character_index = 0
 
 def show_start_menu():
-    global score, paused, shop_open
-    start_menu_open = True
-
-    # Load start menu background image
-    start_menu_background = pygame.image.load("fon_menu.jpg")
-    start_menu_background = pygame.transform.scale(start_menu_background, (WIDTH, HEIGHT))
-
-    while start_menu_open:
+    global start_menu, paused, shop_open
+    while start_menu:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 x, y = pygame.mouse.get_pos()
-                if 300 <= x <= 500 and 250 <= y <= 300:
-                    start_menu_open = False
-                elif 300 <= x <= 400 and 350 <= y <= 400:
-                    pygame.quit()
-                    sys.exit()
-        screen.blit(start_menu_background, (0, 0))
+                if play_button_rect.collidepoint(x, y):
+                    start_menu = False
+
+        screen.blit(background, (0, 0))  # Отрисовка фона
+        screen.blit(menu_image, (0, 0))
+        pygame.draw.rect(screen, (0, 0, 255), (600, 0, 100, 50))
+
         screen.blit(play_button_image, play_button_rect.topleft)
+
         pygame.display.flip()
         pygame.time.Clock().tick(60)
 
-def main():
-    global score, paused, shop_open
-
+while True:
     show_start_menu()
 
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                x, y = pygame.mouse.get_pos()
-                if not paused and not shop_open:
-                    if 100 <= x <= 200 and 100 <= y <= 200:
-                        score += 1
-                        enemy_click_sound.play()  # Воспроизвести звук нажатия на врага
-                        coin_x = random.randint(0, WIDTH - 30)
-                        coin_y = random.randint(0, HEIGHT - 30)
-                        screen.blit(coin_image, (coin_x, coin_y))
-                        if score % clicks_to_change_character == 0:
-                            change_character()
-                    elif 700 <= x <= 800 and 0 <= y <= 50 and not shop_open:
-                        shop_open = True
-                elif paused:
-                    if 300 <= x <= 500 and 250 <= y <= 300:
-                        paused = False
-                    elif 300 <= x <= 400 and 350 <= y <= 400:
-                        reset_game()
-                    elif restart_button_rect.collidepoint(x, y):
-                        reset_game()
-                        paused = False
-                    elif 600 <= x <= 700 and 0 <= y <= 50:
-                        shop_open = not shop_open
-                elif shop_open:
-                    if 0 <= x <= 800 and 0 <= y <= 600:
-                        shop_open = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    paused = not paused
-                elif event.key == pygame.K_s:
-                    shop_open = not shop_open
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            x, y = pygame.mouse.get_pos()
+            if not paused and not shop_open and not boss_active and not boss_defeated:
+                if 100 <= x <= 200 and 100 <= y <= 200:
+                    jumping = True
+                    score += 1
+                    coin_x = random.randint(0, WIDTH - 30)
+                    coin_y = random.randint(0, HEIGHT - 30)
+                    screen.blit(coin_image, (coin_x, coin_y))
+                    if score % clicks_to_change_character == 0:
+                        change_character()
+                    if score % 10 == 0:
+                        enemies_killed += 1
+                        if enemies_killed >= 4:
+                            boss_active = True
+            elif paused:
+                if 300 <= x <= 500 and 250 <= y <= 300:
+                    paused = False
+                elif 300 <= x <= 400 and 350 <= y <= 400:
+                    reset_game()
+                elif restart_button_rect.collidepoint(x, y):
+                    reset_game()
+                    paused = False
+            elif shop_open:
+                if 0 <= x <= 800 and 0 <= y <= 600:
+                    shop_open = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                paused = not paused
 
-        screen.blit(background, (0, 0))
-        coin_rect = coin_image.get_rect(topleft=(100, 5))
-        screen.blit(coin_image, coin_rect)
+    screen.blit(background, (0, 0))
+    coin_rect = coin_image.get_rect(topleft=(100, 5))
+    screen.blit(coin_image, coin_rect)
 
-        if paused:
-            show_pause_menu()
+    if paused:
+        show_pause_menu()
+    elif boss_active or boss_defeated:
+        pass
+    else:
+        score_text = font.render(f" {score}", True, WHITE)
+        screen.blit(score_text, (70, 10))
+
+        if jumping:
+            if jump_timer < jump_duration:
+                character_rect.y -= jump_height
+                jump_timer += 1
+            else:
+                jumping = False
+                jump_timer = 0
         else:
-            score_text = font.render(f" {score}", True, WHITE)
-            screen.blit(score_text, (70, 10))
             character_rect = character_images[current_character_index].get_rect(center=(150, 150))
-            screen.blit(character_images[current_character_index], character_rect)
-            text = font.render(f"Персонаж: {current_character_index + 1}", True, WHITE)
-            screen.blit(text, (WIDTH // 2 - 100, HEIGHT - 50))
 
-        pygame.display.flip()
-        pygame.time.Clock().tick(60)
+        screen.blit(character_images[current_character_index], character_rect)
+        text = font.render(f"Персонаж: {current_character_index + 1}", True, WHITE)
+        screen.blit(text, (WIDTH // 2 - 100, HEIGHT - 50))
 
-if __name__ == "__main__":
-    main()
+    pygame.display.flip()
+    pygame.time.Clock().tick(60)
+
