@@ -1,7 +1,7 @@
 import pygame
 import sys
 import random
-
+from pydub import AudioSegment
 # Инициализация Pygame
 pygame.init()
 
@@ -11,12 +11,17 @@ BLACK = (0, 0, 0)
 
 # Размеры окна
 WIDTH, HEIGHT = 800, 600
-pygame.mixer.music.load("background.mp3")
-pygame.mixer.music.play(-1)  # -1 означает бесконечное воспроизведение
 
 # Создание окна
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Época de los Clics")
+# Загрузка звуковых эффектов
+pygame.mixer.music.load("background.mp3")
+
+pygame.mixer.music.set_volume(0.5)  
+# Загрузка звуковых эффектов
+click_sound = pygame.mixer.Sound("click.mp3")
+
 
 # Загрузка изображений персонажей, фона и предметов в магазине
 character_images = [
@@ -26,13 +31,6 @@ character_images = [
     pygame.transform.scale(pygame.image.load("enemy_4.png"), (100, 100)),
     pygame.transform.scale(pygame.image.load("boss.png"), (150, 150))
 ]
-background = pygame.image.load("background.jpg")
-background = pygame.transform.scale(background, (WIDTH, HEIGHT))
-
-coin_image = pygame.transform.scale(pygame.image.load("money1.png"), (30, 30))
-coin_image.set_colorkey((255, 255, 255))
-
-# Добавленные изображения для анимации прыжка
 jump_character_images = [
     pygame.transform.scale(pygame.image.load("enemy_1.png"), (100, 100)),
     pygame.transform.scale(pygame.image.load("enemy_2.png"), (100, 100)),
@@ -40,6 +38,14 @@ jump_character_images = [
     pygame.transform.scale(pygame.image.load("enemy_4.png"), (100, 100)),
     pygame.transform.scale(pygame.image.load("boss.png"), (150, 150))
 ]
+
+background = pygame.image.load("background.jpg")
+background = pygame.transform.scale(background, (WIDTH, HEIGHT))
+
+coin_image = pygame.transform.scale(pygame.image.load("money1.png"), (30, 30))
+coin_image.set_colorkey((255, 255, 255))
+# Инициализация Pygame
+pygame.init()
 
 # Изображение меню и кнопок
 menu_image = pygame.transform.scale(pygame.image.load("fon_menu.jpg").convert_alpha(), (800, 600))
@@ -73,40 +79,23 @@ boss_active = False
 boss_defeated = False
 
 # Новые переменные для анимации прыжка
-jump_height = 50
-jump_duration = 10
+jump_height = 40
+jump_duration = 5
 jump_timer = 0
 jumping = False
 
-# Новые переменные для управления звуком
+# Настройки
 music_enabled = True
 sound_effects_enabled = True
 
-# Загрузка звуков
-click_sound = pygame.mixer.Sound("click.mp3")
+# Определение функции смены персонажа
+def change_character():
+    global current_character_index
+    current_character_index = (current_character_index + 1) % len(character_images)
 
-# Функции управления настройками
-def toggle_music():
-    global music_enabled
-    music_enabled = not music_enabled
-    if music_enabled:
-        pygame.mixer.music.play(-1)
-    else:
-        pygame.mixer.music.stop()
-
-def toggle_sound_effects():
-    global sound_effects_enabled
-
-    sound_effects_enabled = not sound_effects_enabled
-
-def play_sound_effect():
-    if sound_effects_enabled:
-        click_sound.play()
-
-# Отрисовка экрана паузы
+# Определение функции показа меню паузы
 def show_pause_menu():
     global paused, shop_open, score
-
     while paused:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -131,7 +120,13 @@ def show_pause_menu():
         pygame.display.flip()
         pygame.time.Clock().tick(60)
 
-# Отрисовка экрана начального меню
+# Определение функции сброса игры
+def reset_game():
+    global score, current_character_index
+    score = 0
+    current_character_index = 0
+
+# Определение функции показа начального меню
 def show_start_menu():
     global start_menu, paused, shop_open
 
@@ -147,16 +142,39 @@ def show_start_menu():
 
         screen.blit(background, (0, 0))  # Отрисовка фона
         screen.blit(menu_image, (0, 0))
-        pygame.draw.rect(screen, (0, 0, 255), (600, 0, 100, 50))
+
 
         screen.blit(play_button_image, play_button_rect.topleft)
 
         pygame.display.flip()
         pygame.time.Clock().tick(60)
 
+# Функция воспроизведения звуковых эффектов
+def play_sound_effect():
+    if sound_effects_enabled:
+        click_sound.play()
+
+# Функция включения/выключения фоновой музыки
+def toggle_music():
+    global music_enabled
+    music_enabled = not music_enabled
+    if music_enabled:
+        pygame.mixer.music.unpause()
+    else:
+        pygame.mixer.music.pause()
+
+# Функция включения/выключения звуковых эффектов
+def toggle_sound_effects():
+    global sound_effects_enabled
+    sound_effects_enabled = not sound_effects_enabled
+
 # Основной игровой цикл
 while True:
     show_start_menu()
+    # Воспроизведение фоновой музыки
+    if music_enabled:
+        if not pygame.mixer.music.get_busy():
+            pygame.mixer.music.play(-1)  # -1 означает бесконечное воспроизведение
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -196,10 +214,6 @@ while True:
                 toggle_music()
             elif event.key == pygame.K_s:
                 toggle_sound_effects()
-        # Определение функции смены персонажа
-        def change_character():
-            global current_character_index
-            current_character_index = (current_character_index + 1) % len(character_images)
 
     screen.blit(background, (0, 0))
     coin_rect = coin_image.get_rect(topleft=(100, 5))
@@ -229,3 +243,4 @@ while True:
 
     pygame.display.flip()
     pygame.time.Clock().tick(60)
+ 
