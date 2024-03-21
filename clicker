@@ -1,7 +1,8 @@
 import pygame
 import sys
 import random
-from pydub import AudioSegment
+import os  # Добавляем модуль os
+
 # Инициализация Pygame
 pygame.init()
 
@@ -22,32 +23,20 @@ pygame.mixer.music.set_volume(0.5)
 # Загрузка звуковых эффектов
 click_sound = pygame.mixer.Sound("click.mp3")
 
+# Получаем список файлов в папке с врагами
+enemy_images_path = "enemies/"
+enemy_files = os.listdir(enemy_images_path)
 
-# Загрузка изображений персонажей, фона и предметов в магазине
-character_images = [
-    pygame.transform.scale(pygame.image.load("enemy_1.png"), (100, 100)),
-    pygame.transform.scale(pygame.image.load("enemy_2.png"), (100, 100)),
-    pygame.transform.scale(pygame.image.load("enemy_3.png"), (100, 100)),
-    pygame.transform.scale(pygame.image.load("enemy_4.png"), (100, 100)),
-    pygame.transform.scale(pygame.image.load("boss.png"), (150, 150))
-]
-jump_character_images = [
-    pygame.transform.scale(pygame.image.load("enemy_1.png"), (100, 100)),
-    pygame.transform.scale(pygame.image.load("enemy_2.png"), (100, 100)),
-    pygame.transform.scale(pygame.image.load("enemy_3.png"), (100, 100)),
-    pygame.transform.scale(pygame.image.load("enemy_4.png"), (100, 100)),
-    pygame.transform.scale(pygame.image.load("boss.png"), (150, 150))
-]
+# Загружаем изображения врагов из списка файлов
+enemy_images = []
+for file in enemy_files:
+    if file.endswith(".png"):
+        enemy_images.append(pygame.transform.scale(pygame.image.load(os.path.join(enemy_images_path, file)), (100, 100)))
 
-background = pygame.image.load("background.jpg")
-background = pygame.transform.scale(background, (WIDTH, HEIGHT))
 
 coin_image = pygame.transform.scale(pygame.image.load("money1.png"), (30, 30))
 coin_image.set_colorkey((255, 255, 255))
-# Инициализация Pygame
-pygame.init()
 
-# Изображение меню и кнопок
 menu_image = pygame.transform.scale(pygame.image.load("fon_menu.jpg").convert_alpha(), (800, 600))
 menu_image.set_colorkey((255, 255, 255))
 
@@ -61,10 +50,16 @@ play_button_image = pygame.transform.scale(pygame.image.load('play.png'), (600, 
 play_button_image.set_colorkey((255, 255, 255))
 play_button_rect = play_button_image.get_rect(center=(WIDTH // 2, HEIGHT // 2))
 
+new_background1 = pygame.image.load("fon_1.jpeg")
+new_background1 = pygame.transform.scale(new_background1, (WIDTH, HEIGHT))
+
+new_background2 = pygame.image.load("fon_2.jpeg")
+new_background2 = pygame.transform.scale(new_background2, (WIDTH, HEIGHT))
+
 # Начальная конфигурация
 score = 0
 font = pygame.font.Font(None, 36)
-clicks_to_change_character = 10
+clicks_to_change_character = [1, 5, 10, 15]
 current_character_index = 0
 
 enemy_prices = [5, 10]
@@ -73,27 +68,24 @@ paused = False
 shop_open = False
 start_menu = True
 
+enemies_destroyed = 0  
 boss_health = 100
 enemies_killed = 0
 boss_active = False
 boss_defeated = False
 
-# Новые переменные для анимации прыжка
 jump_height = 40
 jump_duration = 5
 jump_timer = 0
 jumping = False
 
-# Настройки
 music_enabled = True
 sound_effects_enabled = True
 
-# Определение функции смены персонажа
 def change_character():
     global current_character_index
-    current_character_index = (current_character_index + 1) % len(character_images)
+    current_character_index = (current_character_index + 1) % len(enemy_images)
 
-# Определение функции показа меню паузы
 def show_pause_menu():
     global paused, shop_open, score
     while paused:
@@ -113,20 +105,18 @@ def show_pause_menu():
                 elif 600 <= x <= 700 and 0 <= y <= 50:
                     shop_open = not shop_open
 
-        screen.blit(pause_menu, (0, 0))  # Отрисовка фона
+        screen.blit(pause_menu, (0, 0))
         screen.blit(restart_button_image, restart_button_rect.topleft)
         screen.blit(play_button_image, play_button_rect.topleft)
 
         pygame.display.flip()
         pygame.time.Clock().tick(60)
 
-# Определение функции сброса игры
 def reset_game():
     global score, current_character_index
     score = 0
     current_character_index = 0
 
-# Определение функции показа начального меню
 def show_start_menu():
     global start_menu, paused, shop_open
 
@@ -140,21 +130,17 @@ def show_start_menu():
                 if play_button_rect.collidepoint(x, y):
                     start_menu = False
 
-        screen.blit(background, (0, 0))  # Отрисовка фона
+        screen.blit(new_background1, (0, 0))
         screen.blit(menu_image, (0, 0))
-
-
         screen.blit(play_button_image, play_button_rect.topleft)
 
         pygame.display.flip()
         pygame.time.Clock().tick(60)
 
-# Функция воспроизведения звуковых эффектов
 def play_sound_effect():
     if sound_effects_enabled:
         click_sound.play()
 
-# Функция включения/выключения фоновой музыки
 def toggle_music():
     global music_enabled
     music_enabled = not music_enabled
@@ -163,84 +149,117 @@ def toggle_music():
     else:
         pygame.mixer.music.pause()
 
-# Функция включения/выключения звуковых эффектов
 def toggle_sound_effects():
     global sound_effects_enabled
     sound_effects_enabled = not sound_effects_enabled
+# Загрузка изображений врагов из списка файлов
+enemy_images = []
+for file in enemy_files:
+    if file.endswith(".png"):
+        enemy_images.append(pygame.transform.scale(pygame.image.load(os.path.join(enemy_images_path, file)), (100, 100)))
+
+# Теперь enemy_images содержит список изображений врагов из папки "enemies/"
+
+# Начальная конфигурация
+score = 0
+font = pygame.font.Font(None, 36)
+clicks_to_change_character = [1, 5, 10, 15]  # Изменено на список значений
+
+# Определение функции смены персонажа
+def change_character():
+    global current_character_index
+    current_character_index = (current_character_index + 1) % len(enemy_images)
 
 # Основной игровой цикл
-while True:
-    show_start_menu()
-    # Воспроизведение фоновой музыки
-    if music_enabled:
-        if not pygame.mixer.music.get_busy():
-            pygame.mixer.music.play(-1)  # -1 означает бесконечное воспроизведение
+def main():
+    global jumping, jump_timer, character_rect, enemies_killed, enemies_destroyed,shop_open,score,paused
+    paused = False
+    score = 0
+    shop_open = False
+    enemies_killed = 0
+    enemies_destroyed = 0  # Добавляем инициализацию переменной
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            x, y = pygame.mouse.get_pos()
-            if not paused and not shop_open and not boss_active and not boss_defeated:
-                if 100 <= x <= 200 and 100 <= y <= 200:
-                    jumping = True
-                    score += 1
-                    coin_x = random.randint(0, WIDTH - 30)
-                    coin_y = random.randint(0, HEIGHT - 30)
-                    screen.blit(coin_image, (coin_x, coin_y))
-                    play_sound_effect()
-                    if score % clicks_to_change_character == 0:
-                        change_character()
-                    if score % 10 == 0:
-                        enemies_killed += 1
-                        if enemies_killed >= 4:
-                            boss_active = True
-            elif paused:
-                if 300 <= x <= 500 and 250 <= y <= 300:
-                    paused = False
-                elif 300 <= x <= 400 and 350 <= y <= 400:
-                    reset_game()
-                elif restart_button_rect.collidepoint(x, y):
-                    reset_game()
-                    paused = False
-            elif shop_open:
-                if 0 <= x <= 800 and 0 <= y <= 600:
-                    shop_open = False
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                paused = not paused
-            elif event.key == pygame.K_m:
-                toggle_music()
-            elif event.key == pygame.K_s:
-                toggle_sound_effects()
+    while True:
+        show_start_menu()
+        # Воспроизведение фоновой музыки
+        if music_enabled:
+            if not pygame.mixer.music.get_busy():
+                pygame.mixer.music.play(-1)  # -1 означает бесконечное воспроизведение
 
-    screen.blit(background, (0, 0))
-    coin_rect = coin_image.get_rect(topleft=(100, 5))
-    screen.blit(coin_image, coin_rect)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                x, y = pygame.mouse.get_pos()
+                if not paused and not shop_open and not boss_active and not boss_defeated:
+                    if 100 <= x <= 200 and 100 <= y <= 200:
+                        jumping = True
+                        score += 1
+                        coin_x = random.randint(0, WIDTH - 30)
+                        coin_y = random.randint(0, HEIGHT - 30)
+                        screen.blit(coin_image, (coin_x, coin_y))
+                        play_sound_effect()
+                        if score in clicks_to_change_character:
+                            change_character()
+                        if score % 10 == 0:
+                            enemies_killed += 1
+                            enemies_destroyed += 1  # Увеличиваем счетчик уничтоженных врагов
+                            if enemies_destroyed >= 5:  # Если уничтожено 5 врагов
+                                # Здесь меняем фон в соответствии с количеством уничтоженных врагов
+                                if enemies_destroyed == 10:
+                                    background = new_background2
+                                elif enemies_destroyed == 15:
+                                    background = new_background3
+                                # Также можно добавить код для создания новых врагов на новой карте
+                elif paused:
+                    if 300 <= x <= 500 and 250 <= y <= 300:
+                        paused = False
+                    elif 300 <= x <= 400 and 350 <= y <= 400:
+                        reset_game()
+                    elif restart_button_rect.collidepoint(x, y):
+                        reset_game()
+                        paused = False
+                elif shop_open:
+                    if 0 <= x <= 800 and 0 <= y <= 600:
+                        shop_open = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    paused = not paused
+                elif event.key == pygame.K_m:
+                    toggle_music()
+                elif event.key == pygame.K_s:
+                    toggle_sound_effects()
 
-    if paused:
-        show_pause_menu()
-    elif boss_active or boss_defeated:
-        pass
-    else:
-        score_text = font.render(f" {score}", True, WHITE)
-        screen.blit(score_text, (70, 10))
+        screen.blit(new_background1, (0, 0))
+        coin_rect = coin_image.get_rect(topleft=(100, 5))
+        screen.blit(coin_image, coin_rect)
 
-        if jumping:
-            if jump_timer < jump_duration:
-                character_rect.y -= jump_height
-                jump_timer += 1
-            else:
-                jumping = False
-                jump_timer = 0
+        if paused:
+            show_pause_menu()
+        elif boss_active or boss_defeated:
+            pass
         else:
-            character_rect = character_images[current_character_index].get_rect(center=(150, 150))
+            score_text = font.render(f" {score}", True, WHITE)
+            screen.blit(score_text, (70, 10))
 
-        screen.blit(character_images[current_character_index], character_rect)
-        text = font.render(f"Персонаж: {current_character_index + 1}", True, WHITE)
-        screen.blit(text, (WIDTH // 2 - 100, HEIGHT - 50))
+            if jumping:
+                if jump_timer < jump_duration:
+                    character_rect.y -= jump_height
+                    jump_timer += 1
+                else:
+                    jumping = False
+                    jump_timer = 0
+            else:
+                character_rect = enemy_images[current_character_index].get_rect(center=(150, 150))
 
-    pygame.display.flip()
-    pygame.time.Clock().tick(60)
- 
+            screen.blit(enemy_images[current_character_index], character_rect)
+            text = font.render(f"Враг: {current_character_index + 1}", True, WHITE)
+            screen.blit(text, (WIDTH // 2 - 100, HEIGHT - 50))
+
+        pygame.display.flip()
+        pygame.time.Clock().tick(60)
+
+if __name__ == "__main__":
+    main()
+
